@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3 uid="uid://c1je2f0fn8ker"]
+
+[ext_resource type="Environment" uid="uid://bpm7yldxd2sf0" path="res://default_env.tres" id="1_lhwwk"]
+[ext_resource type="Material" uid="uid://di6mwfn3ob370" path="res://Materials/TestMaterials/purple_tmat.tres" id="2_f6glh"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_r55y3"]
+material = ExtResource("2_f6glh")
+
+[node name="Node3D" type="Node3D"]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_r55y3")
+skeleton = NodePath("")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(0.452401, 0.454612, -0.767243, 0, 0.860317, 0.50976, 0.891815, -0.230616, 0.389208, -2.20699, 1.46633, 1.11956)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("1_lhwwk")
