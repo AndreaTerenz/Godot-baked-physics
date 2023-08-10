@@ -1,0 +1,86 @@
+[gd_scene load_steps=8 format=3 uid="uid://dyth2ipd7043k"]
+
+[ext_resource type="Script" path="res://Scripts/PhysBaker.gd" id="1_iwune"]
+[ext_resource type="Material" uid="uid://dbwdu08nxt50i" path="res://Materials/TestMaterials/dark_tmat.tres" id="2_hbc5a"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_uss7f"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ysuo3"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_pwmlp"]
+size = Vector2(20, 20)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_jyibm"]
+size = Vector3(20, 0.005, 20)
+
+[sub_resource type="GDScript" id="GDScript_bs46g"]
+script/source = "extends Label
+
+func _on_recording_start():
+	visible = true
+
+
+func _on_recording_stop():
+	visible = false
+"
+
+[node name="Node3D" type="Node3D"]
+script = ExtResource("1_iwune")
+
+[node name="RigidBody3D" type="RigidBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.48738, 0)
+metadata/_edit_group_ = true
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RigidBody3D"]
+mesh = SubResource("BoxMesh_uss7f")
+metadata/_edit_lock_ = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D"]
+shape = SubResource("BoxShape3D_ysuo3")
+metadata/_edit_lock_ = true
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+metadata/_edit_group_ = true
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+mesh = SubResource("PlaneMesh_pwmlp")
+skeleton = NodePath("../..")
+surface_material_override/0 = ExtResource("2_hbc5a")
+metadata/_edit_lock_ = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+shape = SubResource("BoxShape3D_jyibm")
+metadata/_edit_lock_ = true
+
+[node name="DebugUI" type="Control" parent="."]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="DebugUI"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="Label" type="Label" parent="DebugUI/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+text = "Recording..."
+script = SubResource("GDScript_bs46g")
+
+[connection signal="recording_start" from="." to="DebugUI/MarginContainer/Label" method="_on_recording_start"]
+[connection signal="recording_stop" from="." to="DebugUI/MarginContainer/Label" method="_on_recording_stop"]
