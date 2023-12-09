@@ -20,19 +20,24 @@ size = Vector2(6, 6)
 [sub_resource type="BoxShape3D" id="BoxShape3D_nfx2s"]
 size = Vector3(6, 0.005, 6)
 
-[sub_resource type="GDScript" id="GDScript_bs46g"]
-script/source = "extends Label
+[sub_resource type="GDScript" id="GDScript_asdhl"]
+script/source = "extends Control
 
-func _on_recording_start():
-	visible = true
+@onready var label = $MarginContainer/Label
 
-
-func _on_recording_stop():
-	visible = false
+func _on_baker_state_changed(s):
+	match s:
+		PhysBaker.PHYS_BAKER_STATE.IDLE:
+			label.text = \"Idle\"
+		PhysBaker.PHYS_BAKER_STATE.BAKING:
+			label.text = \"Baking...\"
+		PhysBaker.PHYS_BAKER_STATE.REPLAY:
+			label.text = \"Replaying...\"
 "
 
-[node name="Node3D" type="Node3D"]
+[node name="PhysBaker" type="Node3D"]
 script = ExtResource("1_iwune")
+bake_on_ready = true
 
 [node name="Target" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.538607, 1.48738, 4.60708)
@@ -87,6 +92,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = SubResource("GDScript_asdhl")
 
 [node name="MarginContainer" type="MarginContainer" parent="DebugUI"]
 layout_mode = 1
@@ -105,10 +111,8 @@ layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 0
 text = "Recording..."
-script = SubResource("GDScript_bs46g")
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(-0.107095, -0.187973, 0.976318, 0, 0.981966, 0.18906, -0.994249, 0.0202474, -0.105164, 6.95575, 1.34695, -0.749235)
 
-[connection signal="recording_start" from="." to="DebugUI/MarginContainer/Label" method="_on_recording_start"]
-[connection signal="recording_stop" from="." to="DebugUI/MarginContainer/Label" method="_on_recording_stop"]
+[connection signal="state_changed" from="." to="DebugUI" method="_on_baker_state_changed"]

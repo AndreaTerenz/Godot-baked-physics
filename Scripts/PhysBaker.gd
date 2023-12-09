@@ -7,8 +7,8 @@ enum PHYS_BAKER_STATE {
 	REPLAY
 }
 
-signal recording_start
-signal recording_stop
+signal state_changed(s: PHYS_BAKER_STATE)
+
 
 # TODO
 #	baking length
@@ -25,18 +25,18 @@ var state := PHYS_BAKER_STATE.IDLE :
 	set (s):
 		if s == state:
 			return
-		state = s 
 
-var baking := true :
-	set (r):
-		if r == baking:
-			return
-			
-		baking = r
-		if baking:
-			recording_start.emit()
-		else:
-			recording_stop.emit()
+		toggle_targets_freeze(s != PHYS_BAKER_STATE.BAKING)
+		
+		match s:
+			PHYS_BAKER_STATE.REPLAY:
+				playback_frame = 0
+			PHYS_BAKER_STATE.BAKING:
+				playback_frame = -1
+		
+		state = s 
+		state_changed.emit(s)
+
 var data := {}
 var frames_recorded := 0
 var playback_frame := -1
@@ -55,14 +55,20 @@ func _ready():
 			
 	print("Found %d RgidBodies out of %d total children" % [len(target_kids), get_child_count()])
 	print(data)
-
+	
+	toggle_targets_freeze(true)
 func _input(event):
 	if event.is_action_released("record_toggle"):
-		baking = not baking
-		playback_frame = 0
+		if state == PHYS_BAKER_STATE.IDLE:
+			state = PHYS_BAKER_STATE.BAKING
+		elif state == PHYS_BAKER_STATE.BAKING:
+			state = PHYS_BAKER_STATE.REPLAY
 
 func _physics_process(_delta):
-	if baking:
+	if state == PHYS_BAKER_STATE.IDLE:
+		return
+		
+	if state == PHYS_BAKER_STATE.BAKING:
 		for kid in target_kids:
 			var kp := kid.get_path()
 			var kid_pos := kid.position
@@ -87,10 +93,10 @@ func _physics_process(_delta):
 		
 		frames_recorded += 1
 	else:
-		var source : Array = data[data.keys()[0]]
-		if playback_frame >= len(source):
-			return
+		if playback_frame >= frames_recorded:
+			playback_frame = 0
 		
+		var source : Array = data[data.keys()[0]]
 		var frame : Array = source[playback_frame]
 		
 		target.position = frame[0]
