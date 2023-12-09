@@ -38,6 +38,7 @@ func _on_baker_state_changed(s):
 [node name="PhysBaker" type="Node3D"]
 script = ExtResource("1_iwune")
 bake_on_ready = true
+max_frames = 0
 
 [node name="Target" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.538607, 1.48738, 4.60708)

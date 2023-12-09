@@ -9,11 +9,12 @@ enum PHYS_BAKER_STATE {
 
 signal state_changed(s: PHYS_BAKER_STATE)
 
+@export var bake_on_ready := false
+@export_range(0, 8192) var max_frames : int = 2048
 
 # TODO
 #	baking length
 #	baking timestep
-#	autorecord on ready
 #	physbake data resource
 #	link each tracked RB with a target mesh to move
 
@@ -29,6 +30,9 @@ var state := PHYS_BAKER_STATE.IDLE :
 		toggle_targets_freeze(s != PHYS_BAKER_STATE.BAKING)
 		
 		match s:
+			PHYS_BAKER_STATE.IDLE:
+				if state == PHYS_BAKER_STATE.BAKING:
+					print("Baking stopped (frames: %d)" % frames_recorded)
 			PHYS_BAKER_STATE.REPLAY:
 				playback_frame = 0
 			PHYS_BAKER_STATE.BAKING:
@@ -36,6 +40,12 @@ var state := PHYS_BAKER_STATE.IDLE :
 		
 		state = s 
 		state_changed.emit(s)
+var currently_idle : bool :
+	get:
+		return state == PHYS_BAKER_STATE.IDLE
+var has_frames_left : int :
+	get:
+		return max_frames == 0 or frames_recorded < max_frames
 
 var data := {}
 var frames_recorded := 0
@@ -57,12 +67,21 @@ func _ready():
 	print(data)
 	
 	toggle_targets_freeze(true)
+	
+	if bake_on_ready:
+		state = PHYS_BAKER_STATE.BAKING
+ 
 func _input(event):
-	if event.is_action_released("record_toggle"):
-		if state == PHYS_BAKER_STATE.IDLE:
-			state = PHYS_BAKER_STATE.BAKING
-		elif state == PHYS_BAKER_STATE.BAKING:
-			state = PHYS_BAKER_STATE.REPLAY
+	var new_state = null
+	if event.is_action_pressed("start_stop_bake"):
+		new_state = PHYS_BAKER_STATE.BAKING
+	if event.is_action_pressed("replay"):
+		new_state = PHYS_BAKER_STATE.REPLAY
+		
+	if new_state == null:
+		return
+		
+	state = new_state if state != new_state else PHYS_BAKER_STATE.IDLE
 
 func _physics_process(_delta):
 	if state == PHYS_BAKER_STATE.IDLE:
@@ -75,23 +94,11 @@ func _physics_process(_delta):
 			var kid_rot := kid.rotation
 			var to_append = []
 			
-			if false:
-				# TODO
-				# Implement some baisc memory saving...
-				var last_pos := len(data[kp])-1
-				var kid_pos_last : Vector3 = data[kp][last_pos][0]
-				var kid_rot_last : Vector3 = data[kp][last_pos][1]
-				
-				var pos_diff := kid_pos_last.distance_squared_to(kid_pos)
-				var rot_diff := kid_rot_last.distance_squared_to(kid_rot)
-				
-				# (squared distances)
-				if pos_diff >= (.001**2) or rot_diff >= (.001**2):
-					data[kp].append([kid_pos, kid_rot])
-			else:
-				data[kp].append([kid_pos, kid_rot])
+			data[kp].append([kid_pos, kid_rot])
 		
 		frames_recorded += 1
+		if not has_frames_left:
+			state = PHYS_BAKER_STATE.IDLE
 	else:
 		if playback_frame >= frames_recorded:
 			playback_frame = 0
