@@ -1,7 +1,8 @@
-[gd_scene load_steps=8 format=3 uid="uid://dyth2ipd7043k"]
+[gd_scene load_steps=11 format=3 uid="uid://dyth2ipd7043k"]
 
 [ext_resource type="Script" path="res://Scripts/PhysBaker.gd" id="1_iwune"]
 [ext_resource type="Material" uid="uid://dbwdu08nxt50i" path="res://Materials/TestMaterials/dark_tmat.tres" id="2_hbc5a"]
+[ext_resource type="Material" uid="uid://bx6sdp5juwmat" path="res://Materials/TestMaterials/green_tmat.tres" id="3_1vbdc"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_uss7f"]
 
@@ -12,6 +13,12 @@ size = Vector2(20, 20)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_jyibm"]
 size = Vector3(20, 0.005, 20)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_33nvy"]
+size = Vector2(6, 6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_nfx2s"]
+size = Vector3(6, 0.005, 6)
 
 [sub_resource type="GDScript" id="GDScript_bs46g"]
 script/source = "extends Label
@@ -27,15 +34,16 @@ func _on_recording_stop():
 [node name="Node3D" type="Node3D"]
 script = ExtResource("1_iwune")
 
-[node name="RigidBody3D" type="RigidBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.48738, 0)
+[node name="Target" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.538607, 1.48738, 4.60708)
+mesh = SubResource("BoxMesh_uss7f")
+skeleton = NodePath("../Source")
+
+[node name="Source" type="RigidBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.965926, -0.258819, 0, 0.258819, 0.965926, 0, 1.48738, 0)
 metadata/_edit_group_ = true
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="RigidBody3D"]
-mesh = SubResource("BoxMesh_uss7f")
-metadata/_edit_lock_ = true
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Source"]
 shape = SubResource("BoxShape3D_ysuo3")
 metadata/_edit_lock_ = true
 
@@ -52,6 +60,23 @@ metadata/_edit_lock_ = true
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 shape = SubResource("BoxShape3D_jyibm")
+metadata/_edit_lock_ = true
+
+[node name="StaticBody3D2" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 3.04273)
+metadata/_edit_group_ = true
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="StaticBody3D2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+material_override = ExtResource("3_1vbdc")
+mesh = SubResource("PlaneMesh_33nvy")
+skeleton = NodePath("../..")
+surface_material_override/0 = ExtResource("2_hbc5a")
+metadata/_edit_lock_ = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+shape = SubResource("BoxShape3D_nfx2s")
 metadata/_edit_lock_ = true
 
 [node name="DebugUI" type="Control" parent="."]
@@ -81,6 +106,9 @@ size_flags_horizontal = 0
 size_flags_vertical = 0
 text = "Recording..."
 script = SubResource("GDScript_bs46g")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(-0.107095, -0.187973, 0.976318, 0, 0.981966, 0.18906, -0.994249, 0.0202474, -0.105164, 6.95575, 1.34695, -0.749235)
 
 [connection signal="recording_start" from="." to="DebugUI/MarginContainer/Label" method="_on_recording_start"]
 [connection signal="recording_stop" from="." to="DebugUI/MarginContainer/Label" method="_on_recording_stop"]

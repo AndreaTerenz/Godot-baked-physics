@@ -1,34 +1,45 @@
 class_name PhysBaker
 extends Node3D
 
+enum PHYS_BAKER_STATE {
+	IDLE,
+	BAKING,
+	REPLAY
+}
+
 signal recording_start
 signal recording_stop
 
-# TODO parameters
-#	recording length
-#	recording timestep
+# TODO
+#	baking length
+#	baking timestep
 #	autorecord on ready
 #	physbake data resource
+#	link each tracked RB with a target mesh to move
 
 @onready var debug_ui = $DebugUI
+@onready var target := $Target
 
-var target_kids : Array[NodePath] = []
-var recording := true :
+var target_kids : Array[RigidBody3D] = []
+var state := PHYS_BAKER_STATE.IDLE :
+	set (s):
+		if s == state:
+			return
+		state = s 
+
+var baking := true :
 	set (r):
-		if r == recording:
+		if r == baking:
 			return
 			
-		recording = r
-		if recording:
+		baking = r
+		if baking:
 			recording_start.emit()
-			print("Started recording...")
 		else:
 			recording_stop.emit()
-			print("Stopped recording")
-			print(data)
-			print("Frames: %d" % [frames_recorded])
 var data := {}
 var frames_recorded := 0
+var playback_frame := -1
 
 func _ready():
 	debug_ui.visible = true
@@ -39,7 +50,7 @@ func _ready():
 			var kid_pos : Vector3 = kid.position
 			var kid_rot : Vector3 = kid.rotation
 			
-			target_kids.append(kp)
+			target_kids.append(kid)
 			data[kp] = [[kid_pos, kid_rot]]
 			
 	print("Found %d RgidBodies out of %d total children" % [len(target_kids), get_child_count()])
@@ -47,12 +58,13 @@ func _ready():
 
 func _input(event):
 	if event.is_action_released("record_toggle"):
-		recording = not recording
+		baking = not baking
+		playback_frame = 0
 
-func _physics_process(delta):
-	if recording:
-		for kp in target_kids:
-			var kid : RigidBody3D = (get_node(kp) as RigidBody3D)
+func _physics_process(_delta):
+	if baking:
+		for kid in target_kids:
+			var kp := kid.get_path()
 			var kid_pos := kid.position
 			var kid_rot := kid.rotation
 			var to_append = []
@@ -74,3 +86,18 @@ func _physics_process(delta):
 				data[kp].append([kid_pos, kid_rot])
 		
 		frames_recorded += 1
+	else:
+		var source : Array = data[data.keys()[0]]
+		if playback_frame >= len(source):
+			return
+		
+		var frame : Array = source[playback_frame]
+		
+		target.position = frame[0]
+		target.rotation = frame[1]
+		
+		playback_frame += 1
+
+func toggle_targets_freeze(value: bool):
+	for kid in target_kids:
+		kid.freeze = value
